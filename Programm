@@ -1,0 +1,188 @@
+class Contact:
+    def __init__(self, raw_data):
+        split_data = raw_data.split(',')
+        self.surname, self.name, self.fathername = process_full_name(split_data[0])
+        self.phone_number = process_contact_data(split_data[1])
+        self.email = process_contact_data(split_data[2])
+    def __str__(self):
+        return f'Фамилия: {self.surname} Имя: {self.name} Отчество: {self.fathername}\n' \
+               f'Телефон: {self.phone_number}\n' \
+               f'Email: {self.email}'
+    def __del__(self):
+        del(self)
+#ДОПИСАТЬ ПОИМЕННЫЙ ПОИСК
+def main():
+    print('Введите путь к файлу:')
+    file_path = input()
+    contacts = read_pre_data(file_path)
+    while True:
+        print('Список команд: 1)Поиск по номеру 2)Поиск по email 3)Поиск по ФИО 4)Поиск по пустой почте / номеру 5)Редактировать контакт 6)Завершение работы 7)Поиск отдельно по Ф\И\О')
+        print('Введите название команды:')
+        command = input()
+        if command == 'Завершение работы' or command == '6':
+            print('Завершение работы')
+            break
+        else:
+            print(process_command(command, contacts))
+import io
+#читает файл, воз
+def read_pre_data(file_path):
+
+    with io.open(file_path,encoding='utf-8') as file:
+        raw_data = file.read()
+    raw_data = raw_data.split('\n')
+
+    contacts = []
+    for data_string in raw_data:
+        contacts.append(Contact(data_string))
+
+    return contacts
+
+# любая функция внутри команды возвращает строку
+def process_command(command, contacts):
+    if command == 'Поиск по номеру' or command =='1' :
+        return find_by_phone_number(contacts)
+    if command == 'Поиск по email' or command =='2':
+        return find_by_email(contacts)
+    if command == 'Поиск по ФИО' or command =='3':
+        return find_by_full_name(contacts)
+    if command == 'Поиск по пустой почте / номеру' or command =='4':
+        return find_by_empty_email_or_phone(contacts)
+    if command == 'Редактировать контакт' or command =='5':
+        return edit_contact(contacts)
+    if command == 'Завершение работы' or command == '6':
+        print ('Завершение работы')
+    if command == 'Поиск отдельно по Ф\И\О' or command == '7':
+        return find_by_name_or_surname_or_fathername(contacts)
+
+# обрабатывает строку фио, возвращает фамилию, имя, отчество
+def process_full_name(full_name_raw):
+    full_name_raw = full_name_raw.split(' ')
+    surname = full_name_raw[0]
+    if len(full_name_raw) == 2:
+        return surname, full_name_raw[1], None
+    if len(full_name_raw) == 3:
+        return surname, full_name_raw[1], full_name_raw[2]
+    if len(full_name_raw) == 1:
+        return surname, None, None
+    if len(full_name_raw) == 0:
+        return None, None, None
+
+
+def process_contact_data(data):
+    data = data.replace(' ', '', 1)
+    if len(data) == 0:
+        return None
+    return data
+
+def find_by_phone_number(contacts):
+    print('Введите номер телефона:')
+    phone_number = input()
+    for contact in contacts:
+        if contact.phone_number == phone_number:
+            return str(contact)
+    return 'Такой контакт не найден'
+
+def find_by_email(contacts):
+    print('Введите email:')
+    email = input()
+    for contact in contacts:
+        if contact.email == email:
+            return str(contact)
+    return 'Такой контакт не найден'
+#сравнивает вводное и хранящееся в базе
+def compare_names(find_name, contact_name):
+    if len(find_name) == 0 or contact_name is None:
+        return True
+    return contact_name == find_name
+
+def find_by_full_name(contacts):
+    print('Введите ФИО через пробел:')
+    full_name = input()
+    full_name = full_name.split(' ')
+    result = ''
+    for contact in contacts:
+        if compare_names(full_name[0], contact.surname) and compare_names(full_name[1], contact.name) and compare_names(full_name[2], contact.fathername):
+            result = result + str(contact) + '\n\n'
+    if len(result) == 0:
+        return 'Такие контакты не найдены'
+    return result
+def find_by_name_or_surname_or_fathername(contacts):
+    print('Поиск по(Введите цифру): 1)Фамилия 2)Имя 3) Отчество 4)Фамилия и имя')
+    search_type=input()
+    if search_type=='1':
+        print('Введите фамилию')
+        sur= input()
+        result= ''
+        for contact in contacts:
+            if compare_names(sur, contact.surname) is True:
+                result = result + str(contact) + '\n\n'
+                if len(result) == 0:
+                    return print('Такие контакты не найдены')
+        return result
+    if search_type=='2':
+        print('Введите имя')
+        nam=input()
+        result=''
+        for contact in contacts:
+            if compare_names(nam, contact.name) is True:
+                result = result + str(contact) + '\n\n'
+                if len(result) == 0:
+                    return print('Такие контакты не найдены')
+        return result
+    if search_type=='3':
+        print('Введите Отчество')
+        fat=input()
+        result=''
+        for contact in contacts:
+            if compare_names(fat, contact.fathername) is True:
+                result = result + str(contact) + '\n\n'
+                if len(result) == 0:
+                    return print('Такие контакты не найдены')
+        return result
+    if search_type=='4':
+        print('Введите фамилию и имя')
+        sur_nam=input()
+        result=''
+        sur_nam=sur_nam.split(' ')
+        for contact in contacts:
+            if compare_names(sur_nam[0], contact.surname) and compare_names(sur_nam[1], contact.name):
+                result = result + str(contact) + '\n\n'
+                if len(result) == 0:
+                    return print('Такие контакты не найдены')
+        return result
+
+
+def find_by_empty_email_or_phone(contacts):
+    result = ''
+    for contact in contacts:
+        if contact.email is None or contact.phone_number is None:
+            result = result + str(contact) + '\n\n'
+    if len(result) == 0:
+        return 'Такие контакты не найдены'
+    return result
+
+def edit_contact(contacts):
+    print("Выберите порядковый номер контакта который хотите изменить:")
+    result = ''
+    for i in range(len(contacts)):
+        result = result + f'Номер {i + 1}\n' + str(contacts[i]) + '\n\n'
+    print(result)
+    number = int(input())
+    number -= 1
+    if 0 > number or number >= len(contacts):
+        return 'Неверный порядковый номер'
+    print('Введите новое значение')
+    raw_data = input()
+    if '@' in raw_data:
+        contacts[number].email = raw_data.replace(' ', '')
+    elif '+' in raw_data:
+        contacts[number].phone_number = raw_data.replace(' ', '')
+    else:
+        surname, name, fathername = process_full_name(raw_data)
+        contacts[number].surname = surname if surname != '' else contacts[number].surname
+        contacts[number].name = name if name is not None else contacts[number].name
+        contacts[number].fathername = fathername if fathername is not None else contacts[number].fathername
+    return str(contacts[number])
+
+main()
